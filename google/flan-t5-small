@@ -1,0 +1,130 @@
+
+from transformers import AutoTokenizer, AutoModelForCausalLM, set_seed
+import torch
+import os
+import json
+from datetime import datetime
+
+# ---------------------- CONFIG ----------------------
+MODEL_NAME = "gpt2"  # small, open-source, CPU-friendly
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+SEED = 42
+PROMPT = (
+    "Write a short, imaginative micro-story (about a paragraph) about a lost paper boat that travels across a city at night "
+    "and discovers a surprising secret." 
+)
+OUTPUT_DIR = "outputs_assignment4"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+# Test cases (varying temperature)
+TEST_CASES = [
+    {"name": "temp_0.2", "temperature": 0.2, "max_new_tokens": 120, "top_p": 0.95},
+    {"name": "temp_0.7", "temperature": 0.7, "max_new_tokens": 120, "top_p": 0.95},
+    {"name": "temp_1.0", "temperature": 1.0, "max_new_tokens": 120, "top_p": 0.95},
+]
+
+# ---------------------- UTIL ----------------------
+
+def save_json(path, data):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+# ---------------------- LOAD MODEL ----------------------
+print(f"Loading model {MODEL_NAME} on {DEVICE}...")
+set_seed(SEED)
+
+# Load tokenizer and model
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+# ensure padding token exists for gpt2
+if tokenizer.pad_token is None:
+    tokenizer.pad_token = tokenizer.eos_token
+
+model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
+model.to(DEVICE)
+model.eval()
+
+# ---------------------- GENERATION FUNCTION ----------------------
+
+def generate_text(prompt, temperature=0.7, max_new_tokens=120, top_p=0.95):
+    inputs = tokenizer(prompt, return_tensors="pt")
+    input_ids = inputs["input_ids"].to(DEVICE)
+    attention_mask = inputs["attention_mask"].to(DEVICE)
+
+    with torch.no_grad():
+        generation_output = model.generate(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            do_sample=True,
+            temperature=temperature,
+            top_p=top_p,
+            top_k=0,
+            max_new_tokens=max_new_tokens,
+            pad_token_id=tokenizer.eos_token_id,
+            eos_token_id=tokenizer.eos_token_id,
+            num_return_sequences=1,
+        )
+
+    generated = tokenizer.decode(generation_output[0][input_ids.shape[-1]:], skip_special_tokens=True)
+    return generated.strip()
+
+# ---------------------- RUN TEST CASES ----------------------
+results = {
+    "model": MODEL_NAME,
+    "prompt": PROMPT,
+    "device": DEVICE,
+    "seed": SEED,
+    "datetime": datetime.utcnow().isoformat() + "Z",
+    "tests": []
+}
+
+print("Running test cases (varying temperature)...")
+for case in TEST_CASES:
+    print(f"- {case['name']}: temperature={case['temperature']}, max_new_tokens={case['max_new_tokens']}, top_p={case['top_p']}")
+    out = generate_text(PROMPT, temperature=case["temperature"], max_new_tokens=case["max_new_tokens"], top_p=case["top_p"])
+    snippet = out[:300].replace("\n", " ")
+    results["tests"].append({
+        "name": case["name"],
+        "temperature": case["temperature"],
+        "max_new_tokens": case["max_new_tokens"],
+        "top_p": case["top_p"],
+        "output": out,
+        "snippet": snippet
+    })
+
+# Save outputs
+out_path = os.path.join(OUTPUT_DIR, "generation_results.json")
+save_json(out_path, results)
+print(f"Saved generation results to {out_path}")
+
+# ---------------------- ANALYSIS ----------------------
+analysis_lines = []
+analysis_lines.append("Parameter experimentation analysis (temperature as primary variable):")
+for t in results["tests"]:
+    name = t["name"]
+    temp = t["temperature"]
+    out = t["output"]
+
+    # crude heuristics for analysis
+    length = len(out.split())
+    sentences = out.count('.') + out.count('!') + out.count('?')
+
+    analysis_lines.append(f"\nTest: {name} (temperature={temp})")
+    analysis_lines.append(f"- Generated length (words): {length}")
+    analysis_lines.append(f"- Sentence-like punctuation count: {sentences}")
+    # subjective observations
+    if temp <= 0.3:
+        obs = "Low randomness: output tends to be conservative, coherent, and repetitive; fewer surprising turns."
+    elif temp <= 0.8:
+        obs = "Moderate randomness: generally coherent with occasional creative phrasings and safe novelty."
+    else:
+        obs = "High randomness: more creative and surprising, but may include odd or less coherent phrases."
+    analysis_lines.append(f"- Observation: {obs}")
+
+analysis_text = "\n".join(analysis_lines)
+analysis_path = os.path.join(OUTPUT_DIR, "analysis.txt")
+with open(analysis_path, "w", encoding="utf-8") as f:
+    f.write(analysis_text)
+
+print("\n=== ANALYSIS ===")
+print(analysis_text)
+print(f"\nOutputs and analysis saved under {OUTPUT_DIR}")
