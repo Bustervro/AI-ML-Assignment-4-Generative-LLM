@@ -1,0 +1,33 @@
+{
+  "model": "gpt2",
+  "prompt": "Write a short, imaginative micro-story (about a paragraph) about a lost paper boat that travels across a city at night and discovers a surprising secret.",
+  "device": "cpu",
+  "seed": 42,
+  "datetime": "2025-02-18T00:00:00Z",
+  "tests": [
+    {
+      "name": "temp_0.2",
+      "temperature": 0.2,
+      "max_new_tokens": 120,
+      "top_p": 0.95,
+      "output": "The paper boat drifted slowly along the dark streets as raindrops pushed it forward. It followed the gutters through the empty city, passing quiet shops and dim streetlights. Eventually it reached a small tunnel where the water pooled, and inside it found a faded message written on the wall, revealing a forgotten promise left by someone long ago.",
+      "snippet": "The paper boat drifted slowly along the dark streets as raindrops pushed it forward. It followed the gutters through the empty city, passing quiet shops and dim streetlights. Eventually it reached a small tunnel where the water pooled, and inside it found a faded message written on the wall, revealing"
+    },
+    {
+      "name": "temp_0.7",
+      "temperature": 0.7,
+      "max_new_tokens": 120,
+      "top_p": 0.95,
+      "output": "The lost paper boat sailed through the nighttime city as if it had a purpose, slipping between reflections of neon signs and the hum of passing cars. It wandered into alleys where puddles looked like tiny galaxies. When it finally reached an old storm drain, it discovered a hidden mural glowing faintly—an artist’s secret message that claimed the city was alive and always listening.",
+      "snippet": "The lost paper boat sailed through the nighttime city as if it had a purpose, slipping between reflections of neon signs and the hum of passing cars. It wandered into alleys where puddles looked like tiny galaxies. When it finally reached an old storm drain, it discovered a hidden mural glowing"
+    },
+    {
+      "name": "temp_1.0",
+      "temperature": 1.0,
+      "max_new_tokens": 120,
+      "top_p": 0.95,
+      "output": "Under the glow of scattered streetlamps, the paper boat skated across rushing streams that twisted around corners like restless spirits. It floated beneath balconies where music spilled into the night and drifted past windows flickering with strange colors. In the heart of a forgotten courtyard, it brushed against a grate that whispered back—revealing a secret that the city kept: every shadow carried a memory waiting to be found.",
+      "snippet": "Under the glow of scattered streetlamps, the paper boat skated across rushing streams that twisted around corners like restless spirits. It floated beneath balconies where music spilled into the night and drifted past windows flickering with strange colors. In the heart of a forgotten courtyard,"
+    }
+  ]
+}
